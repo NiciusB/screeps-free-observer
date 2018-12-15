@@ -1,0 +1,7 @@
+{
+  "apps" : [{
+    "name"        : "ScreepsFreeObserver",
+    "script"      : "./index.js",
+    "watch"       : true
+  }]
+}
