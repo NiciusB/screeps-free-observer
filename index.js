@@ -99,6 +99,8 @@ function writeMemorySegment () {
 }
 
 console.log(`Screeps Free Observer started on segment ${config.segment}!`)
-setInterval(readMemorySegment, 1000 / (rateLimits.memorySegmentRead / 60 / 60))
-setInterval(writeMemorySegment, 1000 / (rateLimits.memorySegmentWrite / 60 / 60))
+const readsPerSec = (rateLimits.memorySegmentRead / 60 / 60) / config.shards.length * 0.9 // 0.9 is just margin
+const writesPerSec = (rateLimits.memorySegmentWrite / 60 / 60) / config.shards.length * 0.9 // 0.9 is just margin
+setInterval(readMemorySegment, 1000 / readsPerSec)
+setInterval(writeMemorySegment, 1000 / writesPerSec)
 readMemorySegment()
