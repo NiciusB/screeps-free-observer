@@ -16,6 +16,10 @@ const api = new ScreepsAPI({
   port: 443,
   path: '/'
 })
+api.socket.connect({
+  keepAlive: false, // Due to Error: WebSocket is not open: readyState 0 (CONNECTING)
+  maxRetries: Infinity
+})
 
 const rateLimits = {
   memorySegmentRead: 360, // Per hour
@@ -31,10 +35,6 @@ config.shards.forEach(shard => {
 })
 
 async function readMemorySegment () {
-  await api.socket.connect({
-    keepAlive: false, // Due to Error: WebSocket is not open: readyState 0 (CONNECTING)
-    maxRetries: Infinity
-  })
   config.shards.forEach(shard => {
     api.segment.get(config.segment, shard).then(memory => {
       if (!memory.ok) console.error(JSON.stringify(memory))
@@ -99,8 +99,8 @@ function writeMemorySegment () {
 }
 
 console.log(`Screeps Free Observer started on segment ${config.segment}!`)
-const readsPerSec = (rateLimits.memorySegmentRead / 60 / 60) / config.shards.length * 0.9 // 0.9 is just margin
-const writesPerSec = (rateLimits.memorySegmentWrite / 60 / 60) / config.shards.length * 0.9 // 0.9 is just margin
+const readsPerSec = (rateLimits.memorySegmentRead / 60 / 60) / config.shards.length * 0.95 // 0.95 is just margin for errors
+const writesPerSec = (rateLimits.memorySegmentWrite / 60 / 60) / config.shards.length * 0.95 // 0.95 is just margin for errors
 setInterval(readMemorySegment, 1000 / readsPerSec)
 setInterval(writeMemorySegment, 1000 / writesPerSec)
 readMemorySegment()
