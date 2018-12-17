@@ -1,5 +1,6 @@
 const { ScreepsAPI } = require('screeps-api')
 const fs = require('fs')
+require('events').EventEmitter.defaultMaxListeners = 500
 var config = {}
 
 try {
