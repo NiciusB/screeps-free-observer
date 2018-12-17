@@ -79,8 +79,26 @@ function getRoomData (path) {
     api.socket.subscribe(path, event => {
       if (!event || !event.data) return false
       api.socket.unsubscribe(path)
-      event.data.lastUpdated = Date.now() / 1000
-      resolve(event.data)
+      const controllers = Object.values(event.data.objects).filter(obj => obj.type === 'controller').map(controller => {
+        return {
+          x: controller.x,
+          y: controller.y,
+          level: controller.level,
+          user: controller.user
+        }
+      })
+      const sources = Object.values(event.data.objects).filter(obj => obj.type === 'source').map(source => {
+        return {
+          x: source.x,
+          y: source.y,
+          energyCapacity: source.energyCapacity
+        }
+      })
+      resolve({
+        lastUpdated: Date.now() / 1000,
+        sources: sources,
+        controller: controllers.length ? controllers[0] : null
+      })
     })
   })
 }
@@ -97,7 +115,9 @@ function writeMemorySegment (shard) {
   }
   if (!changed) return false // Nothing to push
   shards[shard].data.lastUpdated = Date.now() / 1000
-  api.segment.set(config.segment, JSON.stringify(shards[shard].data), shard)
+  api.segment.set(config.segment, JSON.stringify(shards[shard].data), shard).then(res => {
+    if (res.error) console.log(res.error)
+  })
 }
 
 function doReads () {
