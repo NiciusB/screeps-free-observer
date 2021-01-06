@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/NiciusB/screeps-free-observer#readme",
   "dependencies": {
-    "screeps-api": "^1.7.2"
+    "screeps-api": "^1.14.0"
   },
   "devDependencies": {
     "eslint": "^5.10.0",

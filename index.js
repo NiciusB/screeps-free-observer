@@ -134,5 +134,5 @@ setInterval(() => {
   writeAfterNextRead = true
 }, 1000 / writesPerSec)
 
-console.log(`Screeps Free Observer started on segment ${config.segment}!`)
+console.log(`Screeps Free Observer started!\nShards: ${config.shards.map(str => `'${str}'`).join(', ')}\nSegment: ${config.segment}`)
 doReads()
