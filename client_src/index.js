@@ -7,7 +7,10 @@ class FreeObserver {
    */
   constructor (segmentID) {
     this.segmentID = segmentID
-    this.pendingRequests = []
+    this.requestsToAddNextTick = []
+    /**
+     * @type {{lastUpdated: number, requests: string[], responses: {object.<string, object>}}|false}
+     */
     this.data = false
   }
 
@@ -16,31 +19,53 @@ class FreeObserver {
    * @param {String} roomName
    */
   getRoom (roomName) {
-    this.pendingRequests.push(roomName)
+    this._markSegmentAsActive()
+    this.requestsToAddNextTick.push(roomName)
     if (this.data && this.data.responses) return this.data.responses[roomName] || false
     return false
+  }
+
+  _loadDataFromRawMemory() {
+    if (!RawMemory.segments[this.segmentID]) return false
+    const tempData = cjson.decompress.fromString(RawMemory.segments[this.segmentID])
+    if (!tempData || !tempData.requests || !Array.isArray(tempData.requests)) return false // Wait for server
+    this.data = tempData
+    return true
+  }
+
+  _saveDataToRawMemory() {
+    RawMemory.segments[this.segmentID] = cjson.compress.toString(this.data)
+  }
+
+  _markSegmentAsActive() {
+    RawMemory.setActiveSegments([this.segmentID])
   }
 
   /**
    * Call every tick
    */
   tick () {
-    RawMemory.setActiveSegments([this.segmentID])
-    if (!RawMemory.segments[this.segmentID]) return false
-    const tempData = cjson.decompress.fromString(RawMemory.segments[this.segmentID])
-    if (!tempData || !tempData.requests || !Array.isArray(tempData.requests)) return false // Wait for server
-    this.data = tempData
+    if (!this.data || this.data.requests.length) {
+      // Ether initializing, or reloading data from raw memory if we're expecting new data
+      this._markSegmentAsActive()
+      this._loadDataFromRawMemory()
+    }
 
-    // Add new pending requests
-    this.pendingRequests.forEach((roomName, index) => {
-      this.pendingRequests.splice(index, 1)
-      if (this.data.requests.indexOf(roomName) === -1) {
-        this.data.requests.push(roomName)
-      }
-    })
+    if (!this.data) {
+      return
+    }
 
-    // Add back to RawMemory
-    RawMemory.segments[this.segmentID] = cjson.compress.toString(this.data)
+    if (this.requestsToAddNextTick.length) {
+      // Add new pending requests
+      this.requestsToAddNextTick.forEach((roomName, index) => {
+        this.requestsToAddNextTick.splice(index, 1)
+        if (this.data.requests.indexOf(roomName) === -1) {
+          this.data.requests.push(roomName)
+        }
+      })
+  
+      this._saveDataToRawMemory()
+    }
   }
 }
 
