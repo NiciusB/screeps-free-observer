@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "dev:client": "parcel watch client_src/index.js --out-dir . --out-file client-api-screeps-free-observer.js --no-source-maps --no-hmr",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -17,6 +18,8 @@
   },
   "homepage": "https://github.com/NiciusB/screeps-free-observer#readme",
   "dependencies": {
+    "compressed-json": "^1.0.16",
+    "parcel-bundler": "^1.12.4",
     "screeps-api": "^1.14.0"
   },
   "devDependencies": {
