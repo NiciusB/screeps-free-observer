@@ -23,12 +23,29 @@
     "screeps-api": "^1.14.0"
   },
   "devDependencies": {
-    "eslint": "^5.10.0",
-    "eslint-config-standard": "^12.0.0",
-    "eslint-plugin-import": "^2.14.0",
-    "eslint-plugin-node": "^8.0.0",
-    "eslint-plugin-promise": "^4.0.1",
-    "eslint-plugin-screeps": "^1.4.0",
+    "eslint": "^7.17.0",
+    "eslint-config-standard": "^16.0.2",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-screeps": "^2.1.0",
     "eslint-plugin-standard": "^4.0.0"
+  },
+  "eslintConfig": {
+    "extends": "standard",
+    "plugins": [
+      "screeps"
+    ],
+    "env": {
+      "screeps/screeps": true
+    },
+    "ignorePatterns": [
+      "/client-api-screeps-free-observer.js"
+    ],
+    "rules": {
+      "no-shadow": [
+        "error"
+      ]
+    }
   }
 }

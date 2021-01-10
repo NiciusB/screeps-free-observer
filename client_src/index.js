@@ -9,7 +9,7 @@ class FreeObserver {
     this.segmentID = segmentID
     this.requestsToAddNextTick = []
     /**
-     * @type {{lastUpdated: number, requests: string[], responses: {object.<string, object>}}|false}
+     * @type {{lastUpdated: number, requests: string[], responses: {{room: object.<string, object>, lastUpdated: number}}}|false}
      */
     this.data = false
   }
@@ -21,11 +21,13 @@ class FreeObserver {
   getRoom (roomName) {
     this._markSegmentAsActive()
     this.requestsToAddNextTick.push(roomName)
-    if (this.data && this.data.responses) return this.data.responses[roomName] || false
+    if (this.data && this.data.responses && this.data.responses[roomName]) {
+      return this.data.responses[roomName].room || false
+    }
     return false
   }
 
-  _loadDataFromRawMemory() {
+  _loadDataFromRawMemory () {
     if (!RawMemory.segments[this.segmentID]) return false
     const tempData = cjson.decompress.fromString(RawMemory.segments[this.segmentID])
     if (!tempData || !tempData.requests || !Array.isArray(tempData.requests)) return false // Wait for server
@@ -33,11 +35,11 @@ class FreeObserver {
     return true
   }
 
-  _saveDataToRawMemory() {
+  _saveDataToRawMemory () {
     RawMemory.segments[this.segmentID] = cjson.compress.toString(this.data)
   }
 
-  _markSegmentAsActive() {
+  _markSegmentAsActive () {
     RawMemory.setActiveSegments([this.segmentID])
   }
 
@@ -63,7 +65,7 @@ class FreeObserver {
           this.data.requests.push(roomName)
         }
       })
-  
+
       this._saveDataToRawMemory()
     }
   }

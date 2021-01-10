@@ -684,7 +684,7 @@ var FreeObserver = /*#__PURE__*/function () {
     this.segmentID = segmentID;
     this.requestsToAddNextTick = [];
     /**
-     * @type {{lastUpdated: number, requests: string[], responses: {object.<string, object>}}|false}
+     * @type {{lastUpdated: number, requests: string[], responses: {{room: object.<string, object>, lastUpdated: number}}}|false}
      */
 
     this.data = false;
@@ -701,7 +701,11 @@ var FreeObserver = /*#__PURE__*/function () {
       this._markSegmentAsActive();
 
       this.requestsToAddNextTick.push(roomName);
-      if (this.data && this.data.responses) return this.data.responses[roomName] || false;
+
+      if (this.data && this.data.responses && this.data.responses[roomName]) {
+        return this.data.responses[roomName].room || false;
+      }
+
       return false;
     }
   }, {

@@ -1,7 +1,7 @@
 const { ScreepsAPI } = require('screeps-api')
 const fs = require('fs')
 require('events').EventEmitter.defaultMaxListeners = 500
-var config = {}
+let config = {}
 
 const cjson = require('compressed-json')
 
@@ -36,18 +36,22 @@ config.shards.forEach(shard => {
     notYetPushedRooms: {}
   }
 })
-var writeAfterNextRead = false
+let writeAfterNextRead = false
+
+function resetSegment (shard) {
+  api.segment.set(config.segment, cjson.compress.toString({
+    lastUpdated: 0,
+    requests: [],
+    responses: {}
+  }), shard)
+}
 
 async function readMemorySegment (shard, doWrite) {
   const memory = await api.segment.get(config.segment, shard)
   if (!memory.ok) console.error(JSON.stringify(memory))
   if (memory.data === null || memory.data === '') {
-    console.log(`Welcome! Make sure to use the in-game API to request room data`)
-    api.segment.set(config.segment, cjson.compress.toString({
-      lastUpdated: 0,
-      requests: [],
-      responses: {}
-    }), shard)
+    console.log('Welcome! Make sure to use the in-game API to request room data')
+    resetSegment(shard)
     return null
   }
   try {
@@ -70,7 +74,7 @@ async function processRequests (shard) {
   shards[shard].data.requests.forEach(reqRoom => {
     shards[shard].notYetPushedRooms[reqRoom] = true
     toAwait.push(getRoomData(`room:${shard}/${reqRoom}`).then(result => {
-      shards[shard].notYetPushedRooms[reqRoom] = result
+      shards[shard].notYetPushedRooms[reqRoom] = { room: result, lastUpdated: Math.floor(Date.now() / 1000) }
     }))
   })
   await Promise.all(toAwait)
@@ -96,8 +100,9 @@ function getRoomData (path) {
           energyCapacity: source.energyCapacity
         }
       })
+
       resolve({
-        lastUpdated: Date.now() / 1000,
+        lastUpdated: Math.floor(Date.now() / 1000),
         sources: sources,
         controller: controllers.length ? controllers[0] : null
       })
@@ -106,19 +111,29 @@ function getRoomData (path) {
 }
 
 function writeMemorySegment (shard) {
-  var changed = false
-  for (let roomID in shards[shard].notYetPushedRooms) {
+  let changed = false
+  for (const roomID in shards[shard].notYetPushedRooms) {
     if (shards[shard].notYetPushedRooms[roomID] === true) continue
+
+    // Update response for room
     changed = true
     shards[shard].data.responses[roomID] = shards[shard].notYetPushedRooms[roomID]
     delete shards[shard].notYetPushedRooms[roomID]
+
+    // Remove from requests
     const indexToRemove = shards[shard].data.requests.indexOf(roomID)
     if (indexToRemove !== -1) shards[shard].data.requests.splice(indexToRemove, 1)
   }
   if (!changed) return false // Nothing to push
-  shards[shard].data.lastUpdated = Date.now() / 1000
+
+  shards[shard].data.lastUpdated = Math.floor(Date.now() / 1000)
   api.segment.set(config.segment, cjson.compress.toString(shards[shard].data), shard).then(res => {
-    if (res.error) console.log(res.error)
+    if (res.error) throw new Error(res.error)
+  }).catch(err => {
+    if (err.message === 'length limit exceeded') {
+      resetSegment(shard)
+    }
+    console.log(err)
   })
 }
 
